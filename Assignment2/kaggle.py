@@ -43,13 +43,27 @@ test_data = load_json(args.test_data.strip())
 x_train,y_train = get_xy_train(train_data)
 x_test = get_xy_test(test_data)
 
-vectorizer = TfidfVectorizer(token_pattern=r"\b\w+\b",ngram_range=(0,3))
+vectorizer = TfidfVectorizer(sublinear_tf=True,ngram_range=(0,3),token_pattern=r"\b\w+\b",binary=True)
 
 x_train_vector = vectorizer.fit_transform(x_train)
-x_test_vector = vectorizer.transform(x_test)
 
-clf = svm.LinearSVC(random_state=0,C=0.352)
+clf = svm.LinearSVC(C=0.543)
 clf.fit(x_train_vector,y_train)
+
+# To improve accuracy, remove outliers
+y_test = clf.predict(x_train_vector)
+x_temp = []
+y_temp = []
+for i in range(len(y_test)):
+	if(y_test[i]==y_train[i]):
+		x_temp.append(x_train[i])
+		y_temp.append(y_train[i])
+# re train model using new set of training data
+
+x_train_vector = vectorizer.fit_transform(np.array(x_temp))
+clf.fit(x_train_vector,y_temp)
+
+x_test_vector = vectorizer.transform(x_test)
 
 predictions = clf.predict(x_test_vector)
 
